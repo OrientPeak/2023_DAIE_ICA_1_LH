@@ -3,5 +3,144 @@ title: "SQLite ICA1 part 1"
 ---
 
 ```{r}
-1+1
+### Clear console on each execute and set chunk default to not show code
+
+cat('\014')
+
+### Download and load libraries
+
+if(!require("DBI"))
+  install.packages("DBI")
+if(!require("dplyr"))
+  install.packages("dplyr")
+if(!require("tidyverse"))
+  install.packages("tidyverse")
+
+library(DBI)
+library(dplyr)
+library(tidyverse)
+```
+
+```{r}
+### Connection to the database
+
+conn <- dbConnect(RSQLite::SQLite(), dbname = "ICA_2023.sqlite")
+```
+
+```{r}
+### Query for section 1 question 1
+
+#### Lists the budget and amount of projects based on country
+
+dbGetQuery(conn, "SELECT 
+                        cs.customerCountry as country, 
+                        sum(ps.budget) as totalBudget,
+                        count(ps.projectId) as ammtOfProjects 
+                  FROM 
+                      customers cs 
+                  JOIN 
+                      projects ps ON cs. customerId = ps.customerId 
+                  GROUP BY 
+                          country 
+                  ORDER BY 
+                          totalBudget DESC;")
+```
+
+```{r}
+### Query for section 1 question 2
+
+#### Used to display average development time of a project based on the number of assets used
+
+dbGetQuery(conn, "SELECT 
+                        ps.projectId,
+                        count(a.assetId) as totalAssets,
+                        julianday(ps.enddate) - julianday(ps.startdate)                             as avgDevTime
+                  FROM  
+                      projects ps
+                  JOIN
+                      assets a ON ps.projectId = a.projectId
+                  GROUP BY
+                          ps.projectId;")
+```
+
+```{r}
+### Query for section 1 question 3
+
+#### Used to show the top 3 developers according to the ammount of completed projects 
+
+dbGetQuery(conn, "SELECT
+                        ds.name as developerName,
+                        count(ps.projectId) as completedProjects
+                  FROM
+                      developers ds
+                  JOIN
+                      projectdevelopers pds ON 
+                      ds.developerId = pds.developerId
+                  JOIN
+                      projects ps ON pds.projectId = ps.projectId
+                  WHERE
+                       ps.status = 'Completed'
+                  GROUP BY
+                          ds.developerId, developerName
+                  ORDER BY
+                          completedProjects DESC
+                  LIMIT 3;")
+```
+
+```{r}
+### Query for section 2 question 1
+
+#### Shows the relation of the amount of models and textures compared to budget
+dbGetQuery(conn, "SELECT
+                        ps.projectName,
+                        COUNT(a.type) AS totalAssets,
+                        ps.budget
+                  FROM
+                      projects ps
+                  JOIN
+                      assets a ON ps.projectId = a.projectId
+                  WHERE 
+                       a.type LIKE '%3D Model%' OR a.type LIKE '%Texture%'
+                       OR a.type LIKE '%Animation%'
+                  GROUP BY
+                          ps.projectId
+                  ORDER BY 
+                          ps.budget;")
+```
+
+```{r}
+### Query for section 2 question 2
+
+#### Shows unique types of assets in the projects
+
+dbGetQuery(conn, "SELECT
+                        DISTINCT type
+                  FROM
+                      assets
+                  ORDER BY 
+                          creationDate;")
+```
+
+```{r}
+### Query for section 2 question 3
+
+#### See all developers working on a specific project
+
+dbGetQuery(conn, "SELECT
+                        name
+                  FROM
+                      developers
+                  WHERE
+                       DeveloperId IN 
+                       (SELECT
+                              developerId
+                        FROM
+                            projectDevelopers
+                        WHERE
+                             ProjectId = 102);")
+```
+
+```{r}
+### Disconnecting from the database
+dbDisconnect(conn)
 ```

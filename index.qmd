@@ -2,13 +2,15 @@
 title: "SQLite ICA1 part 1"
 ---
 
-```{r}
 ### Clear console on each execute and set chunk default to not show code
 
+```{r}
 cat('\014')
+```
 
 ### Download and load libraries
 
+```{r}
 if(!require("DBI"))
   install.packages("DBI")
 if(!require("dplyr"))
@@ -19,20 +21,23 @@ if(!require("tidyverse"))
 library(DBI)
 library(dplyr)
 library(tidyverse)
+library(knitr)
 ```
 
-```{r}
 ### Connection to the database
 
+```{r}
 conn <- dbConnect(RSQLite::SQLite(), dbname = "ICA_2023.sqlite")
 ```
 
-```{r}
+## Section A
+
 ### Query for section 1 question 1
 
 #### Lists the budget and amount of projects based on country
 
-dbGetQuery(conn, "SELECT 
+```{r}
+Q1.1 <- dbGetQuery(conn, "SELECT 
                         cs.customerCountry as country, 
                         sum(ps.budget) as totalBudget,
                         count(ps.projectId) as ammtOfProjects 
@@ -44,14 +49,16 @@ dbGetQuery(conn, "SELECT
                           country 
                   ORDER BY 
                           totalBudget DESC;")
+
+kable(Q1.1)
 ```
 
-```{r}
 ### Query for section 1 question 2
 
 #### Used to display average development time of a project based on the number of assets used
 
-dbGetQuery(conn, "SELECT 
+```{r}
+Q1.2 <- dbGetQuery(conn, "SELECT 
                         ps.projectId,
                         count(a.assetId) as totalAssets,
                         julianday(ps.enddate) - julianday(ps.startdate)                             as avgDevTime
@@ -61,14 +68,16 @@ dbGetQuery(conn, "SELECT
                       assets a ON ps.projectId = a.projectId
                   GROUP BY
                           ps.projectId;")
+
+kable(Q1.2)
 ```
 
-```{r}
 ### Query for section 1 question 3
 
-#### Used to show the top 3 developers according to the ammount of completed projects 
+#### Used to show the top 3 developers according to the ammount of completed projects
 
-dbGetQuery(conn, "SELECT
+```{r}
+Q1.3 <- dbGetQuery(conn, "SELECT
                         ds.name as developerName,
                         count(ps.projectId) as completedProjects
                   FROM
@@ -85,13 +94,16 @@ dbGetQuery(conn, "SELECT
                   ORDER BY
                           completedProjects DESC
                   LIMIT 3;")
+
+kable(Q1.3)
 ```
 
-```{r}
 ### Query for section 2 question 1
 
 #### Shows the relation of the amount of models and textures compared to budget
-dbGetQuery(conn, "SELECT
+
+```{r}
+Q2.1 <- dbGetQuery(conn, "SELECT
                         ps.projectName,
                         COUNT(a.type) AS totalAssets,
                         ps.budget
@@ -106,41 +118,77 @@ dbGetQuery(conn, "SELECT
                           ps.projectId
                   ORDER BY 
                           ps.budget;")
+
+kable(Q2.1)
 ```
 
-```{r}
 ### Query for section 2 question 2
 
 #### Shows unique types of assets in the projects
 
-dbGetQuery(conn, "SELECT
+```{r}
+Q2.2 <- dbGetQuery(conn, "SELECT
                         DISTINCT type
                   FROM
                       assets
                   ORDER BY 
                           creationDate;")
+
+kable(Q2.2)
 ```
 
-```{r}
 ### Query for section 2 question 3
 
 #### See all developers working on a specific project
 
-dbGetQuery(conn, "SELECT
-                        name
-                  FROM
-                      developers
-                  WHERE
-                       DeveloperId IN 
-                       (SELECT
-                              developerId
-                        FROM
-                            projectDevelopers
-                        WHERE
-                             ProjectId = 102);")
+```{r}
+Q2.3 <- dbGetQuery(conn, "SELECT
+                          name
+                      FROM
+                          developers
+                     WHERE
+                          DeveloperId IN 
+                          (SELECT
+                                 developerId
+                           FROM
+                               projectDevelopers
+                           WHERE
+                                ProjectId = 102);")
+
+kable(Q2.3)
 ```
 
+## Section B
+
+### Part 1
+
+#### Dataframe from database query for table creation
+
 ```{r}
-### Disconnecting from the database
+QB <- dbGetQuery(conn, "SELECT
+                        ps.budget,
+                        COUNT(ads.developerId) AS developers
+                  FROM
+                      projects ps
+                  JOIN
+                      assets a ON a.projectId = ps.projectId
+                  JOIN
+                      assetsdevelopers ads ON ads.assetId = a.assetId
+                  GROUP BY
+                          ps.projectId, ps.budget;")
+projectData <- as.data.frame(QB)
+
+head(projectData)
+
+projectData %>%
+  lm(Budget ~ developers, data = .) %>%
+  summary()
+
+ggplot(projectData,aes(x = Budget, y = developers)) + geom_point() +geom_smooth(method = "lm")
+```
+
+## Disconnecting from the database
+
+```{r}
 dbDisconnect(conn)
 ```

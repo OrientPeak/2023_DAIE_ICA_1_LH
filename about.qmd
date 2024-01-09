@@ -1,9 +1,3 @@
 ---
-title: "About"
+title: "TechExploration"
 ---
-
-About this site
-
-```{r}
-1 + 1
-```

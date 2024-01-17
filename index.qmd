@@ -187,6 +187,20 @@ projectData %>%
 ggplot(projectData,aes(x = Budget, y = developers)) + geom_point() +geom_smooth(method = "lm")
 ```
 
+### Part 2
+
+As there are a very limited number of entries the values we are getting are all over the place and we can not read anything from them since the t value is 0 and the p value is 1 we can not conclude anything from this and can only see that this result we got is 100% random and we have 100% of p value meaning we can not reject the null hypothesis either meaning that for any conclusion we need a bigger sample.
+
+### Part 3
+
+The reliability of the model is nonexistent and can not be for sure determined with this amount of data as all the values are the worst possible for a definite conclusion of a hypothesis and because of that there can be no outliers either.
+
+## Section E
+
+In the first part of the assignment is when I learned the way to connect the R program to the sql database and do queries on it. those queries were than used to make tables that would than display custom formatting of the data. Next thing that I learned was the making of dataframes with the queries that were executed and putting that data on a plot to represent it visually. Next in part C was learning how to set up an interactive webpage and than populate with tables and plots learned in parts a and b.
+
+The way this knowledge can be applied in a gaming industry is simple. It is the only way to effectively measure how well the game is doing or analyse how well it will do to measure if it is worth to make it and if it will earn money or not.
+
 ## Disconnecting from the database
 
 ```{r}

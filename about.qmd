@@ -1,3 +1,7 @@
 ---
 title: "TechExploration"
 ---
+
+## Section D
+
+The packages I used in this project for tables and plots are plotly, ggplot and ggplot2, esquisse, kable and i tried using ggmap but I couldn't get the api from Google to link to the map so I was unable to use it.
